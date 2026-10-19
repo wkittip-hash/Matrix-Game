@@ -1,0 +1,304 @@
+<title>Rank–Nullity Drill</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,600&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+
+:root{
+  --paper:#eef3ee; --grid:#d5e2d6; --sheet:#f8fbf7; --ink:#1d2a44; --muted:#5d6b7c;
+  --line:#c3d1c6; --accent:#2848a8; --accent-ink:#ffffff; --pivot:#f2c14e; --pivot-ink:#3b2a00;
+  --free:#c8432f; --good:#2f7d4f; --bad:#b33a2b; --chip:#e3ebe4;
+  --f-display:"STIX Two Text","Cambria Math",Georgia,serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#131a1d; --grid:#1c262a; --sheet:#182124; --ink:#e4ece8; --muted:#93a39e;
+  --line:#2c3a3e; --accent:#8ea8ff; --accent-ink:#0d1430; --pivot:#e2b33f; --pivot-ink:#251a00;
+  --free:#ff8a73; --good:#6fd39a; --bad:#ff8a7a; --chip:#223034; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#131a1d; --grid:#1c262a; --sheet:#182124; --ink:#e4ece8; --muted:#93a39e;
+  --line:#2c3a3e; --accent:#8ea8ff; --accent-ink:#0d1430; --pivot:#e2b33f; --pivot-ink:#251a00;
+  --free:#ff8a73; --good:#6fd39a; --bad:#ff8a7a; --chip:#223034; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px;
+  color:var(--ink); font-family:var(--f-body); font-size:15px; line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:24px 48px;
+}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-weight:600;font-size:2.1rem;line-height:1.1;margin:0;text-wrap:balance}
+h1 i{font-weight:400}
+.sub{margin:4px 0 0;color:var(--muted);max-width:52ch}
+.levels{display:flex;gap:4px;background:var(--chip);padding:4px;border-radius:8px}
+.levels button{font:500 13px var(--f-body);border:0;background:transparent;color:var(--ink);padding:6px 12px;border-radius:6px;cursor:pointer}
+.levels button[aria-pressed="true"]{background:var(--sheet);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:6px;padding:22px clamp(16px,4vw,32px);display:flex;flex-direction:column;gap:22px}
+.score{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.score b{display:block;font:600 1.35rem var(--f-mono);letter-spacing:0;color:var(--ink);text-transform:none;font-variant-numeric:tabular-nums}
+.progress{display:flex;gap:4px}
+.progress span{flex:1;height:5px;border-radius:3px;background:var(--chip)}
+.progress span.ok{background:var(--good)} .progress span.half{background:var(--pivot)} .progress span.no{background:var(--bad)} .progress span.now{background:var(--accent)}
+
+.prompt{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px 20px}
+.lhs{font-family:var(--f-display);font-size:1.7rem;font-style:italic}
+.dims{font-family:var(--f-display);color:var(--muted);font-size:1.05rem;text-align:center}
+.dims i{color:var(--ink)}
+.mat-scroll{overflow-x:auto;max-width:100%}
+.mat{display:inline-grid;position:relative;padding:6px 14px;gap:4px 6px;font:500 1.25rem var(--f-mono);font-variant-numeric:tabular-nums}
+.mat::before,.mat::after{content:"";position:absolute;top:0;bottom:0;width:9px;border:2px solid var(--ink)}
+.mat::before{left:0;border-right:0}
+.mat::after{right:0;border-left:0}
+.mat span{min-width:2.3em;text-align:right;padding:2px 4px;border-radius:3px}
+.mat.small{font-size:.95rem;padding:4px 11px}
+.mat.small span{min-width:2.6em}
+.mat span.pv{background:var(--pivot);color:var(--pivot-ink);font-weight:600}
+.mat span.fc{color:var(--free)}
+.mat span.dim{opacity:.4}
+
+.answers{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+legend{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0}
+legend em{font-family:var(--f-display);text-transform:none;letter-spacing:0;font-size:15px;color:var(--ink)}
+.keys{display:flex;flex-wrap:wrap;gap:6px}
+.keys button{font:600 1.05rem var(--f-mono);width:44px;height:44px;border-radius:6px;border:1.5px solid var(--line);background:var(--sheet);color:var(--ink);cursor:pointer}
+.keys button:hover:not(:disabled){border-color:var(--accent)}
+.keys button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.keys button.right{background:var(--good);border-color:var(--good);color:var(--sheet)}
+.keys button.wrong{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.keys button:disabled{cursor:default}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.eq{font-family:var(--f-display);font-size:1.15rem;text-align:center;color:var(--muted)}
+.eq b{color:var(--ink);font-family:var(--f-mono);font-weight:600}
+.eq .bad{color:var(--bad)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.primary{font:600 15px var(--f-body);background:var(--accent);color:var(--accent-ink);border:0;border-radius:6px;padding:11px 22px;cursor:pointer}
+.primary:disabled{opacity:.4;cursor:default}
+.ghost{font:500 14px var(--f-body);background:transparent;color:var(--accent);border:0;padding:8px 6px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.hint{color:var(--muted);font-size:13px;margin-left:auto}
+
+.verdict{font-family:var(--f-display);font-size:1.35rem;margin:0}
+.verdict.ok{color:var(--good)} .verdict.no{color:var(--bad)}
+.work{border-top:1px dashed var(--line);padding-top:18px;display:flex;flex-direction:column;gap:14px}
+.work h3{margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.work p{margin:0;max-width:65ch}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:center}
+.vecs{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.vecs .mat span{min-width:2em}
+.key-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:5px}
+
+.summary{text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.summary .big{font:600 3.2rem var(--f-mono);margin:0}
+.summary p{margin:0;color:var(--muted)}
+footer{font-size:13px;color:var(--muted);max-width:65ch}
+footer i{font-family:var(--f-display)}
+@media (prefers-reduced-motion:no-preference){.pop{animation:pop .25s ease-out}@keyframes pop{from{transform:translateY(4px);opacity:.5}to{transform:none;opacity:1}}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Rank–Nullity <i>Drill</i></h1>
+      <p class="sub">Read the matrix, call its rank and the dimension of its null space. Ten matrices a round.</p>
+    </div>
+    <div class="levels" role="group" aria-label="Difficulty">
+      <button id="lv-0" data-lv="0">2–3 wide</button>
+      <button id="lv-1" data-lv="1">3–4 wide</button>
+      <button id="lv-2" data-lv="2">4–5 wide</button>
+    </div>
+  </header>
+
+  <main class="sheet" id="sheet"></main>
+
+  <footer>Rank–nullity theorem: for <i>A</i> with <i>n</i> columns, rank(<i>A</i>) + nullity(<i>A</i>) = <i>n</i>. Rank is the number of pivots in the reduced row echelon form; each non-pivot column is a free variable and contributes one vector to a basis of the null space. Keys: type rank then nullity as digits, <b>Enter</b> checks or moves on.</footer>
+</div>
+
+<script>
+(function(){
+/* ---------- exact rationals ---------- */
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a||1};
+const F=(n,d=1)=>{if(d<0){n=-n;d=-d}const g=gcd(n,d);return{n:n/g,d:d/g}};
+const sub=(a,b)=>F(a.n*b.d-b.n*a.d,a.d*b.d), mul=(a,b)=>F(a.n*b.n,a.d*b.d), div=(a,b)=>F(a.n*b.d,a.d*b.n);
+const fs=f=>f.d===1?String(f.n):f.n+"/"+f.d;
+
+function rref(A){
+  const m=A.length,n=A[0].length,R=A.map(r=>r.map(x=>F(x)));const piv=[];let r=0;
+  for(let c=0;c<n&&r<m;c++){
+    let p=-1;for(let i=r;i<m;i++)if(R[i][c].n!==0){p=i;break}
+    if(p<0)continue;[R[r],R[p]]=[R[p],R[r]];
+    const pv=R[r][c];R[r]=R[r].map(x=>div(x,pv));
+    for(let i=0;i<m;i++)if(i!==r&&R[i][c].n!==0){const k=R[i][c];R[i]=R[i].map((x,j)=>sub(x,mul(k,R[r][j])))}
+    piv.push(c);r++;
+  }
+  return{R,piv};
+}
+function nullBasis(R,piv,n){
+  const free=[];for(let j=0;j<n;j++)if(!piv.includes(j))free.push(j);
+  return free.map(j=>{
+    const v=Array(n).fill(null).map(()=>F(0));v[j]=F(1);
+    piv.forEach((pc,i)=>{v[pc]=F(-R[i][j].n,R[i][j].d)});
+    let L=1;v.forEach(x=>{L=L*x.d/gcd(L,x.d)});
+    return{free:j,v:v.map(x=>x.n*(L/x.d))};
+  });
+}
+
+/* ---------- matrix generation ---------- */
+const LEVELS=[
+  {shapes:[[2,2],[2,3],[3,2],[3,3]],lim:9},
+  {shapes:[[3,3],[3,4],[4,3],[4,4]],lim:12},
+  {shapes:[[4,4],[4,5],[5,4],[5,5],[3,5],[5,3]],lim:15}
+];
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=ri(0,i);[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function makeMatrix(lv){
+  const L=LEVELS[lv];
+  for(let tries=0;tries<400;tries++){
+    const [m,n]=pick(L.shapes),k=Math.min(m,n);
+    let r;const roll=Math.random();
+    if(roll<0.03)r=0;else if(roll<0.33)r=k;else r=ri(1,Math.max(1,k-1));
+    if(r===0)return{A:Array.from({length:m},()=>Array(n).fill(0)),m,n};
+    if(r===k){const A=Array.from({length:m},()=>Array.from({length:n},()=>ri(-4,5)));if(rref(A).piv.length===k)return{A,m,n};continue}
+    const B=Array.from({length:m},()=>Array.from({length:r},()=>pick([-2,-1,-1,0,0,0,1,1,1,2])));
+    const C=Array.from({length:r},()=>Array.from({length:n},()=>pick([-3,-2,-1,0,0,1,1,2,3])));
+    for(let i=0;i<r;i++){B[i][i]=pick([1,1,-1,2]);}
+    const A=Array.from({length:m},(_,i)=>Array.from({length:n},(_,j)=>{let s=0;for(let t=0;t<r;t++)s+=B[i][t]*C[t][j];return s}));
+    if(A.some(row=>row.some(x=>Math.abs(x)>L.lim)))continue;
+    const zr=A.filter(row=>row.every(x=>x===0)).length;
+    if(zr>1&&r>1)continue;
+    shuffle(A);
+    if(rref(A).piv.length!==r)continue;
+    return{A,m,n};
+  }
+  return{A:[[1,2],[2,4]],m:2,n:2};
+}
+
+const ROUND=10;
+let S={lv:1,i:0,results:[],q:null,rank:null,nul:null,checked:false,showWork:false,streak:0,best:0,pts:0};
+let bests={};
+try{bests=JSON.parse(localStorage.getItem("rn-bests")||"{}")}catch(e){}
+try{const v=localStorage.getItem("rn-level");if(v!==null)S.lv=+v}catch(e){}
+
+function newQuestion(){
+  const {A,m,n}=makeMatrix(S.lv);const {R,piv}=rref(A);
+  S.q={A,m,n,R,piv,rank:piv.length,basis:nullBasis(R,piv,n)};
+  S.rank=null;S.nul=null;S.checked=false;S.showWork=false;
+}
+function newRound(){S.i=0;S.results=[];S.streak=0;S.pts=0;newQuestion();render()}
+
+const $=s=>document.querySelector(s);
+const sheet=$("#sheet");
+function matHTML(rows,cls="",cellCls){
+  const n=rows[0].length;
+  return `<div class="mat-scroll"><div class="mat ${cls}" style="grid-template-columns:repeat(${n},auto)">`+
+    rows.map((r,i)=>r.map((x,j)=>`<span class="${cellCls?cellCls(i,j):""}">${x}</span>`).join("")).join("")+`</div></div>`;
+}
+function keys(name,max,sel,correct){
+  let h="";for(let v=0;v<=max;v++){
+    let c="";if(S.checked){if(v===correct)c="right";else if(v===sel)c="wrong"}
+    h+=`<button id="${name}-${v}" data-k="${name}" data-v="${v}" aria-pressed="${sel===v}" class="${c}" ${S.checked?"disabled":""}>${v}</button>`;
+  }return `<div class="keys">${h}</div>`;
+}
+function render(){
+  document.querySelectorAll(".levels button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.lv===S.lv));
+  if(S.i>=ROUND)return renderSummary();
+  const q=S.q,k=Math.min(q.m,q.n);
+  const prog=Array.from({length:ROUND},(_,i)=>{const r=S.results[i];return `<span class="${r==null?(i===S.i?"now":""):(r===2?"ok":r===1?"half":"no")}"></span>`}).join("");
+  const sum=(S.rank!=null&&S.nul!=null)?S.rank+S.nul:null;
+  const eq=`<div class="eq">rank <b>${S.rank??"?"}</b> + nullity <b>${S.nul??"?"}</b> = <b class="${sum!=null&&sum!==q.n?"bad":""}">${sum??"?"}</b> &nbsp;·&nbsp; columns <i>n</i> = <b>${q.n}</b></div>`;
+
+  let fb="";
+  if(S.checked){
+    const rOK=S.rank===q.rank,nOK=S.nul===q.n-q.rank;
+    const msg=rOK&&nOK?(S.streak>=3?`Correct — ${S.streak} in a row.`:"Correct."):rOK||nOK?`Half right. Rank ${q.rank}, nullity ${q.n-q.rank}.`:`Not this one. Rank ${q.rank}, nullity ${q.n-q.rank}.`;
+    fb=`<p class="verdict ${rOK&&nOK?"ok":"no"} pop" role="status">${msg}</p>`;
+  }
+  let work="";
+  if(S.checked&&S.showWork){
+    const freeCols=[];for(let j=0;j<q.n;j++)if(!q.piv.includes(j))freeCols.push(j);
+    const Rs=q.R.map(r=>r.map(fs));
+    const pivAt=(i,j)=>q.piv[i]===j;
+    work=`<section class="work pop">
+      <h3>Reduced row echelon form</h3>
+      <div class="row">${matHTML(Rs,"small",(i,j)=>pivAt(i,j)?"pv":(freeCols.includes(j)&&i<q.rank?"fc":(i>=q.rank?"dim":"")))}</div>
+      <div class="key-legend"><span><span class="sw" style="background:var(--pivot)"></span>pivot (${q.rank})</span><span><span class="sw" style="background:var(--free)"></span>free column (${freeCols.length})</span></div>
+      <p>${q.rank} pivot${q.rank===1?"":"s"}, so rank = ${q.rank}. ${q.n} columns − ${q.rank} pivots leaves ${freeCols.length} free variable${freeCols.length===1?"":"s"}${freeCols.length?` (x<sub>${freeCols.map(j=>j+1).join("</sub>, x<sub>")}</sub>)`:""}, so nullity = ${freeCols.length}.</p>
+      <h3>${q.basis.length?"A basis for the null space":"Null space"}</h3>
+      ${q.basis.length?`<div class="vecs">${q.basis.map(b=>matHTML(b.v.map(x=>[x]),"small",(i)=>i===b.free?"fc":"")).join("")}</div>`:`<p>Only the zero vector: the columns are linearly independent.</p>`}
+    </section>`;
+  }
+
+  sheet.innerHTML=`
+    <div class="score">
+      <div>Matrix<b>${S.i+1}/${ROUND}</b></div><div>Points<b>${S.pts}</b></div><div>Streak<b>${S.streak}</b></div><div>Best round<b>${bests[S.lv]??"–"}</b></div>
+    </div>
+    <div class="progress" aria-hidden="true">${prog}</div>
+    <div class="prompt"><span class="lhs">A =</span>${matHTML(q.A)}</div>
+    <div class="dims"><i>A</i> is ${q.m} × ${q.n} &nbsp;·&nbsp; <i>A</i> : ℝ<sup>${q.n}</sup> → ℝ<sup>${q.m}</sup></div>
+    <div class="answers">
+      <fieldset><legend>rank(<em>A</em>)</legend>${keys("rank",k,S.rank,q.rank)}</fieldset>
+      <fieldset><legend>nullity(<em>A</em>) = dim ker <em>A</em></legend>${keys("nul",q.n,S.nul,q.n-q.rank)}</fieldset>
+    </div>
+    ${eq}
+    ${fb}
+    <div class="actions">
+      ${S.checked?`<button class="primary" id="next">${S.i+1===ROUND?"See results":"Next matrix"}</button>
+        <button class="ghost" id="work">${S.showWork?"Hide working":"Show working"}</button>`
+       :`<button class="primary" id="check" ${S.rank==null||S.nul==null?"disabled":""}>Check</button>`}
+      <span class="hint">1 point each for rank and nullity</span>
+    </div>
+    ${work}`;
+}
+function renderSummary(){
+  const full=S.results.filter(r=>r===2).length;
+  const prev=bests[S.lv];const isBest=prev==null||S.pts>prev;
+  if(isBest){bests[S.lv]=S.pts;try{localStorage.setItem("rn-bests",JSON.stringify(bests))}catch(e){}}
+  const line=S.pts>=18?"Sharp eyes. Try a bigger size.":S.pts>=12?"Solid. Watch for rows that are sums of other rows.":"Use Show working after each matrix to see where pivots land.";
+  sheet.innerHTML=`<div class="summary pop">
+    <p>Round complete</p><p class="big">${S.pts}/${ROUND*2}</p>
+    <p>${full} of ${ROUND} matrices fully correct${isBest&&prev!=null?" · new best":""}.</p>
+    <p>${line}</p>
+    <div class="actions"><button class="primary" id="again">Play another round</button></div>
+  </div>`;
+}
+
+function check(){
+  if(S.checked||S.rank==null||S.nul==null)return;
+  const q=S.q;let p=0;if(S.rank===q.rank)p++;if(S.nul===q.n-q.rank)p++;
+  S.pts+=p;S.results[S.i]=p;S.streak=p===2?S.streak+1:0;S.checked=true;render();
+  const n=$("#next");n&&n.focus();
+}
+function next(){S.i++;if(S.i<ROUND)newQuestion();render()}
+sheet.addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.k){if(b.dataset.k==="rank")S.rank=+b.dataset.v;else S.nul=+b.dataset.v;render();
+    const f=document.getElementById(b.id);f&&f.focus();return}
+  if(b.id==="check")check();else if(b.id==="next")next();
+  else if(b.id==="work"){S.showWork=!S.showWork;render()}else if(b.id==="again")newRound();
+});
+document.querySelector(".levels").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;S.lv=+b.dataset.lv;
+  try{localStorage.setItem("rn-level",S.lv)}catch(e){}newRound();
+});
+document.addEventListener("keydown",e=>{
+  if(e.target.closest&&e.target.closest("input,textarea"))return;
+  if(/^[0-9]$/.test(e.key)&&!S.checked&&S.i<ROUND){
+    const v=+e.key;const q=S.q;
+    if(S.rank==null||S.nul!=null&&e.shiftKey===false&&S.rank!=null&&S.nul!=null){ if(v<=Math.min(q.m,q.n)){S.rank=v;render()} }
+    else if(v<=q.n){S.nul=v;render()}
+  }
+  if(e.key==="Enter"&&!(e.target.tagName==="BUTTON")){if(S.i>=ROUND)newRound();else if(S.checked)next();else check()}
+});
+
+newRound();
+})();
+</script>
